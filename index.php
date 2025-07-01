@@ -4,60 +4,75 @@
 // Header standar untuk API
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS"); // Izinkan semua metode HTTP
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
-// Handle pre-flight request (OPTIONS method)
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     http_response_code(200);
     exit();
 }
 
-// Sertakan file koneksi database
 include_once 'config/database.php';
 
-// Mendapatkan path dari URL request
-// Contoh: /api/menu/read -> array('api', 'menu', 'read')
 $request_uri = explode('/', trim($_SERVER['REQUEST_URI'], '/'));
-
-// Asumsikan base path adalah 'SentraCoffee'
-// Anda mungkin perlu menyesuaikannya tergantung bagaimana Anda mengakses proyek di server lokal
 $base_path_index = array_search('SentraCoffee', $request_uri);
+
 if ($base_path_index !== false) {
-    // Hapus bagian base path agar path yang tersisa hanya path API
     $request_uri = array_slice($request_uri, $base_path_index + 1);
 }
 
-// Minimal harus ada 'api' dan setidaknya 1 resource (misal: 'menu')
 if (empty($request_uri) || $request_uri[0] !== 'api' || count($request_uri) < 2) {
     http_response_code(404);
     echo json_encode(array("message" => "API endpoint not found."));
     exit();
 }
 
-// Ambil resource dan action
-$resource = isset($request_uri[1]) ? $request_uri[1] : ''; // e.g., 'menu', 'customer', 'transaction'
-$action = isset($request_uri[2]) ? $request_uri[2] : '';   // e.g., 'read', 'create', 'login'
-$id = isset($request_uri[3]) ? $request_uri[3] : '';       // e.g., '1' for read_single, update, delete
+$resource = isset($request_uri[1]) ? $request_uri[1] : '';
+$action = isset($request_uri[2]) ? $request_uri[2] : '';
+$id = isset($request_uri[3]) ? $request_uri[3] : '';
 
-// Menentukan file endpoint yang akan disertakan
-$endpoint_file = ''; // Inisialisasi kosong
+$endpoint_file = '';
 
-// --- LOGIKA ROUTING BARU UNTUK 'transaction/create' ---
+// --- LOGIKA ROUTING ---
+// Aturan spesifik diletakkan di atas aturan umum
 if ($resource === 'transaction' && $action === 'create') {
     $endpoint_file = 'api/transaction/create.php';
+} 
+else if ($resource === 'report' && $action === 'wallet') {
+    $endpoint_file = 'api/report/wallet.php';
 }
-// --- AKHIR LOGIKA ROUTING BARU UNTUK 'transaction/create' ---
+else if ($resource === 'customer' && $action === 'loyalty_history') {
+    $endpoint_file = 'api/customer/loyalty_history.php';
+}
 else if ($resource === 'customer' && $action === 'login') {
     $endpoint_file = 'api/customer/login.php';
+} 
+// +++ TAMBAHKAN BLOK INI UNTUK PROMO +++
+else if ($resource === 'promotion') {
+    switch ($action) {
+        case 'create':
+            $endpoint_file = 'api/promotion/create.php';
+            break;
+        case 'read':
+            $endpoint_file = 'api/promotion/read.php';
+            break;
+        case 'read_active':
+            $endpoint_file = 'api/promotion/read_active.php';
+            break;
+        case 'update_status':
+            $endpoint_file = 'api/promotion/update_status.php';
+            break;
+        default:
+            // Biarkan kosong agar jatuh ke 404 di bawah
+            break;
+    }
 }
+// +++ AKHIR BLOK TAMBAHAN +++
 else if ($action === 'read' && !empty($id)) {
-    // Jika action read dan ada ID, arahkan ke read_single
     $endpoint_file = 'api/' . $resource . '/read_single.php';
-    $_GET['id'] = $id; // Melewatkan ID via GET parameter
+    $_GET['id'] = $id;
 } else {
-    // Routing default untuk action lainnya (read, create, update, delete)
     $endpoint_file = 'api/' . $resource . '/' . $action . '.php';
 }
 
@@ -68,5 +83,4 @@ if (file_exists($endpoint_file)) {
     http_response_code(404);
     echo json_encode(array("message" => "Endpoint for " . $resource . "/" . $action . " not found."));
 }
-
 ?>
