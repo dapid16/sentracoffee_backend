@@ -1,8 +1,7 @@
 <?php
-// Header yang diperlukan
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Methods: POST, GET, PUT, DELETE, OPTIONS");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
@@ -11,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit();
 }
 
-include_once __DIR__ . '/../../config/database.php';
+include_once '../../config/database.php';
 
 $database = new Database();
 $db = $database->getConnection();
@@ -19,82 +18,50 @@ $db = $database->getConnection();
 $data = json_decode(file_get_contents("php://input"));
 
 if (
-    !empty($data->id_customer) &&
-    !empty($data->id_staff) &&
-    !empty($data->payment_method) &&
-    isset($data->total_amount) &&
-    !empty($data->details) &&
-    is_array($data->details)
+    !empty($data->nama_staff) &&
+    !empty($data->email) &&
+    !empty($data->password) &&
+    !empty($data->role) &&
+    !empty($data->id_owner)
 ) {
-    // Logika perhitungan poin
-    $points_earned = 0;
-    $points_used = isset($data->points_used) ? (int)$data->points_used : 0;
-    $description = "Earned from purchase";
+    // Cek apakah email sudah terdaftar
+    $check_query = "SELECT id_staff FROM staffs WHERE email = ?";
+    $check_stmt = $db->prepare($check_query);
+    $check_stmt->bindParam(1, $data->email);
+    $check_stmt->execute();
 
-    if ($points_used > 0) {
-        $description = "Redeemed with points";
-    } else {
-        $points_earned = floor($data->total_amount / 1000) * 100;
+    if($check_stmt->rowCount() > 0){
+        http_response_code(409); // Conflict
+        echo json_encode(array("message" => "Email already registered for a staff."));
+        exit();
     }
-    
-    $points_change_for_customer = $points_earned - $points_used;
 
-    $db->beginTransaction();
+    $query = "INSERT INTO staffs (nama_staff, email, password, role, no_hp, id_owner) VALUES (:nama_staff, :email, :password, :role, :no_hp, :id_owner)";
+    $stmt = $db->prepare($query);
 
-    try {
-        // 1. INSERT ke tabel `transactions`
-        $query1 = "INSERT INTO transactions SET id_customer=:id_customer, id_staff=:id_staff, payment_method=:payment_method, total_amount=:total_amount, points_earned=:points_earned, status='Completed'";
-        $stmt1 = $db->prepare($query1);
-        $stmt1->bindParam(":id_customer", $data->id_customer);
-        $stmt1->bindParam(":id_staff", $data->id_staff);
-        $stmt1->bindParam(":payment_method", $data->payment_method);
-        $stmt1->bindParam(":total_amount", $data->total_amount);
-        $stmt1->bindParam(":points_earned", $points_earned);
-        $stmt1->execute();
-        $id_transaction_baru = $db->lastInsertId();
+    $nama_staff = htmlspecialchars(strip_tags($data->nama_staff));
+    $email = htmlspecialchars(strip_tags($data->email));
+    $password = htmlspecialchars(strip_tags($data->password)); // Sebaiknya di-hash
+    $role = htmlspecialchars(strip_tags($data->role));
+    $no_hp = isset($data->no_hp) ? htmlspecialchars(strip_tags($data->no_hp)) : null;
+    $id_owner = htmlspecialchars(strip_tags($data->id_owner));
 
-        // 2. INSERT ke tabel `transaction_details`
-        $query2 = "INSERT INTO transaction_details SET id_transaction=:id_transaction, id_menu=:id_menu, quantity=:quantity, subtotal=:subtotal";
-        $stmt2 = $db->prepare($query2);
-        foreach ($data->details as $detail) {
-            $stmt2->bindParam(":id_transaction", $id_transaction_baru);
-            $stmt2->bindParam(":id_menu", $detail->id_menu);
-            $stmt2->bindParam(":quantity", $detail->quantity);
-            $stmt2->bindParam(":subtotal", $detail->subtotal);
-            $stmt2->execute();
-        }
+    $stmt->bindParam(":nama_staff", $nama_staff);
+    $stmt->bindParam(":email", $email);
+    $stmt->bindParam(":password", $password);
+    $stmt->bindParam(":role", $role);
+    $stmt->bindParam(":no_hp", $no_hp);
+    $stmt->bindParam(":id_owner", $id_owner);
 
-        // 3. INSERT ke tabel `loyalty_points_history`
-        $query3 = "INSERT INTO loyalty_points_history SET id_customer=:id_customer, id_transaction=:id_transaction, points_change=:points_change, type=:type, description=:description";
-        $stmt3 = $db->prepare($query3);
-        $type = ($points_used > 0) ? "redeem" : "earn";
-        $stmt3->bindParam(":id_customer", $data->id_customer);
-        $stmt3->bindParam(":id_transaction", $id_transaction_baru);
-        $stmt3->bindParam(":points_change", $points_change_for_customer);
-        $stmt3->bindParam(":type", $type);
-        $stmt3->bindParam(":description", $description);
-        $stmt3->execute();
-
-        // 4. UPDATE total poin di tabel `customers`
-        $query4 = "UPDATE customers SET points = points + :points_change WHERE id_customer = :id_customer";
-        $stmt4 = $db->prepare($query4);
-        $stmt4->bindParam(":points_change", $points_change_for_customer);
-        $stmt4->bindParam(":id_customer", $data->id_customer);
-        $stmt4->execute();
-
-        $db->commit();
-
+    if ($stmt->execute()) {
         http_response_code(201);
-        echo json_encode(["success" => true, "message" => "Transaction created successfully."]);
-
-    } catch (Exception $e) {
-        $db->rollBack();
-
+        echo json_encode(array("message" => "Staff was created."));
+    } else {
         http_response_code(503);
-        echo json_encode(["success" => false, "message" => "Transaction failed.", "error" => $e->getMessage()]);
+        echo json_encode(array("message" => "Unable to create staff."));
     }
 } else {
     http_response_code(400);
-    echo json_encode(["success" => false, "message" => "Incomplete data provided."]);
+    echo json_encode(array("message" => "Unable to create staff. Data is incomplete."));
 }
 ?>

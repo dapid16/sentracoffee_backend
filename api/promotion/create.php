@@ -11,31 +11,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 }
 
 include_once '../../config/database.php';
-include_once '../../models/Menu.php';
+include_once '../../models/Promotion.php';
 
 $database = new Database();
 $db = $database->getConnection();
-
-$menu = new Menu($db);
-
+$promo = new Promotion($db);
 $data = json_decode(file_get_contents("php://input"));
 
-if (!empty($data->nama_menu) && !empty($data->kategori) && !empty($data->harga)) {
-    $menu->nama_menu = $data->nama_menu;
-    $menu->kategori = $data->kategori;
-    $menu->harga = $data->harga;
-    $menu->is_available = isset($data->is_available) ? $data->is_available : 1;
-    $menu->gambar = isset($data->gambar) ? $data->gambar : null;
+if(
+    !empty($data->promo_name) &&
+    !empty($data->discount_type) &&
+    isset($data->discount_value)
+){
+    $promo->promo_name = $data->promo_name;
+    $promo->description = $data->description;
+    $promo->discount_type = $data->discount_type;
+    $promo->discount_value = $data->discount_value;
 
-    if ($menu->create()) {
+    if($promo->create()){
         http_response_code(201);
-        echo json_encode(array("message" => "Menu was created."));
+        echo json_encode(array("message" => "Promotion was created."));
     } else {
         http_response_code(503);
-        echo json_encode(array("message" => "Unable to create menu."));
+        echo json_encode(array("message" => "Unable to create promotion."));
     }
 } else {
     http_response_code(400);
-    echo json_encode(array("message" => "Unable to create menu. Data is incomplete."));
+    echo json_encode(array("message" => "Unable to create promotion. Data is incomplete."));
 }
 ?>
