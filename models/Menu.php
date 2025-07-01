@@ -79,7 +79,15 @@ class Menu {
     // --- PERBAIKAN #5: Tambahkan 'gambar' ke query UPDATE ---
     public function update() {
         // <<< UBAH QUERY INI
-        $query = "UPDATE " . $this->table_name . " SET nama_menu=:nama_menu, kategori=:kategori, harga=:harga, is_available=:is_available, gambar=:gambar WHERE id_menu = :id_menu";
+        $query = "UPDATE " . $this->table_name . " 
+                  SET 
+                    nama_menu = :nama_menu, 
+                    kategori = :kategori, 
+                    harga = :harga, 
+                    is_available = :is_available, 
+                    gambar = :gambar 
+                  WHERE 
+                    id_menu = :id_menu";
         
         $stmt = $this->conn->prepare($query);
 
@@ -107,7 +115,21 @@ class Menu {
 
     // Fungsi delete tidak perlu diubah
     public function delete() {
-        // ... (biarkan seperti semula) ...
+        $query = "DELETE FROM " . $this->table_name . " WHERE id_menu = :id_menu";
+
+        $stmt = $this->conn->prepare($query);
+
+        // Bersihkan data
+        $this->id_menu = htmlspecialchars(strip_tags($this->id_menu));
+
+        // Bind ID menu yang akan dihapus
+        $stmt->bindParam(':id_menu', $this->id_menu);
+
+        // Eksekusi query
+        if ($stmt->execute()) {
+            return true;
+        }
+        return false;
     }
 }
 ?>
