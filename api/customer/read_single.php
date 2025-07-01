@@ -6,14 +6,10 @@ header("Access-Control-Allow-Methods: POST, GET, PUT, DELETE, OPTIONS"); // Izin
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
-// Handle pre-flight request (OPTIONS method) - Ini penting untuk preflight request CORS
-// Ini harus ada di SETIAP FILE ENDPOINT, BUKAN HANYA index.php
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    http_response_code(200); // Harus 200 OK untuk OPTIONS
-    exit(); // Harus exit setelah merespons OPTIONS
+    http_response_code(200);
+    exit();
 }
-
-// ... KODE PHP LAINNYA (include, inisialisasi database, logic utama) ...
 
 // Sertakan file koneksi database dan model
 include_once '../../config/database.php';
@@ -35,7 +31,8 @@ if ($customer->readOne()) {
         "id_customer" => $customer->id_customer,
         "nama" => $customer->nama,
         "email" => $customer->email,
-        "no_hp" => $customer->no_hp
+        "no_hp" => $customer->no_hp,
+        "points" => $customer->points // <<< TAMBAHKAN BARIS INI
     );
 
     http_response_code(200); // OK
