@@ -107,5 +107,6 @@ if (!empty($data->email) && !empty($data->password)) {
 } else {
     http_response_code(400);
     echo json_encode(["success" => false, "message" => "Email dan password tidak boleh kosong."]);
+    exit;
 }
 ?>
