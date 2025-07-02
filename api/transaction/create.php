@@ -14,10 +14,9 @@ include_once '../../config/database.php';
 
 $data = json_decode(file_get_contents("php://input"));
 
+// <<< PERUBAHAN DI SINI: validasi id_staff dihapus >>>
 if (
     empty($data->id_customer) ||
-    empty($data->id_staff) ||
-    empty($data->payment_method) ||
     !isset($data->total_amount) ||
     empty($data->details) ||
     !is_array($data->details)
@@ -73,12 +72,16 @@ try {
         $points_earned = floor($final_total_amount / 1000) * 100;
     }
     $points_change = $points_earned - $points_used;
+    
+    // <<< PERUBAHAN DI SINI: Menangani id_staff yang mungkin NULL >>>
+    $id_staff = isset($data->id_staff) ? $data->id_staff : null;
+    $payment_method = !empty($data->payment_method) ? $data->payment_method : 'Cash';
 
     $query1 = "INSERT INTO transactions SET id_customer=:id_customer, id_staff=:id_staff, payment_method=:payment_method, total_amount=:total_amount, status='Completed', id_promotion=:id_promotion, discount_amount=:discount_amount, points_earned=:points_earned";
     $stmt1 = $db->prepare($query1);
     $stmt1->bindParam(":id_customer", $data->id_customer);
-    $stmt1->bindParam(":id_staff", $data->id_staff);
-    $stmt1->bindParam(":payment_method", $data->payment_method);
+    $stmt1->bindParam(":id_staff", $id_staff, $id_staff === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+    $stmt1->bindParam(":payment_method", $payment_method);
     $stmt1->bindParam(":total_amount", $final_total_amount);
     $stmt1->bindParam(":id_promotion", $id_promotion);
     $stmt1->bindParam(":discount_amount", $discount_amount);
