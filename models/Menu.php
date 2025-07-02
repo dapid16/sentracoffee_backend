@@ -19,8 +19,11 @@ class Menu {
     // --- PERBAIKAN #2: Tambahkan 'gambar' ke query SELECT ---
     // Fungsi untuk membaca semua menu
     public function read() {
-        // <<< UBAH QUERY INI
-        $query = "SELECT id_menu, nama_menu, kategori, harga, is_available, gambar FROM " . $this->table_name . " ORDER BY nama_menu ASC";
+        // Query diubah untuk hanya mengambil menu yang aktif
+        $query = "SELECT id_menu, nama_menu, kategori, harga, is_available, gambar 
+                  FROM " . $this->table_name . " 
+                  WHERE is_available = 1 
+                  ORDER BY nama_menu ASC";
         
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
@@ -115,16 +118,17 @@ class Menu {
 
     // Fungsi delete tidak perlu diubah
     public function delete() {
-        $query = "DELETE FROM " . $this->table_name . " WHERE id_menu = :id_menu";
-
+        // Query UPDATE untuk menonaktifkan menu, bukan menghapusnya
+        $query = "UPDATE " . $this->table_name . " SET is_available = 0 WHERE id_menu = :id_menu";
+    
         $stmt = $this->conn->prepare($query);
-
+    
         // Bersihkan data
         $this->id_menu = htmlspecialchars(strip_tags($this->id_menu));
-
-        // Bind ID menu yang akan dihapus
+    
+        // Bind ID menu yang akan di-nonaktifkan
         $stmt->bindParam(':id_menu', $this->id_menu);
-
+    
         // Eksekusi query
         if ($stmt->execute()) {
             return true;
