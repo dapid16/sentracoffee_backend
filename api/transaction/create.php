@@ -1,7 +1,8 @@
 <?php
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Methods: POST, GET, PUT, DELETE, OPTIONS");
+header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
@@ -13,7 +14,12 @@ include_once '../../config/database.php';
 
 $data = json_decode(file_get_contents("php://input"));
 
-if (empty($data->id_customer) || !isset($data->total_amount) || empty($data->details) || !is_array($data->details)) {
+if (
+    empty($data->id_customer) ||
+    !isset($data->total_amount) ||
+    empty($data->details) ||
+    !is_array($data->details)
+) {
     http_response_code(400);
     echo json_encode(["success" => false, "message" => "Incomplete data provided."]);
     exit();
@@ -27,8 +33,8 @@ try {
     $id_promotion = null;
     $discount_amount = 0;
     $original_total = 0;
-
-    foreach ($data->details as $item) {
+    
+    foreach($data->details as $item) {
         $original_total += $item->subtotal;
     }
 
@@ -42,28 +48,30 @@ try {
             $promo = $promo_stmt->fetch(PDO::FETCH_ASSOC);
             $id_promotion = $promo['id_promotion'];
             $discount_value = (float)$promo['discount_value'];
+
             if ($promo['discount_type'] == 'persen') {
                 $discount_amount = $original_total * ($discount_value / 100);
             } else {
                 $discount_amount = $discount_value;
             }
-            if ($discount_amount > $original_total) {
+             if ($discount_amount > $original_total) {
                 $discount_amount = $original_total;
             }
         }
     }
-
+    
     $final_total_amount = $original_total - $discount_amount;
+    
     $points_earned = 0;
     $points_used = isset($data->points_used) ? (int)$data->points_used : 0;
-
+    
     if ($points_used > 0) {
         $final_total_amount = 0;
     } else {
         $points_earned = floor($final_total_amount / 1000) * 100;
     }
     $points_change = $points_earned - $points_used;
-
+    
     $id_staff = isset($data->staffId) ? $data->staffId : null;
     $payment_method = !empty($data->payment_method) ? $data->payment_method : 'Cash';
 
@@ -89,7 +97,7 @@ try {
         $stmt2->execute();
     }
     
-    // Logika Pengurangan Stok Otomatis
+    // --- Logika Pengurangan Stok Otomatis ---
     foreach ($data->details as $detail) {
         $id_menu = $detail->id_menu;
         $quantity_sold = $detail->quantity;
@@ -113,7 +121,24 @@ try {
     }
     
     if ($points_change != 0) {
-        // ... (logika history poin)
+        $history_query = "INSERT INTO loyalty_points_history SET id_customer=:id_customer, id_transaction=:id_transaction, points_change=:points_change, type=:type, description=:description";
+        $history_stmt = $db->prepare($history_query);
+        
+        $type = ($points_used > 0) ? "redeem" : "earn";
+        $description = ($points_used > 0) ? "Redeemed with points" : "Earned from purchase";
+
+        $history_stmt->bindParam(":id_customer", $data->id_customer);
+        $history_stmt->bindParam(":id_transaction", $id_transaction_baru);
+        $history_stmt->bindParam(":points_change", $points_change);
+        $history_stmt->bindParam(":type", $type);
+        $history_stmt->bindParam(":description", $description);
+        $history_stmt->execute();
+
+        $customer_update_query = "UPDATE customers SET points = points + :points_change WHERE id_customer = :id_customer";
+        $customer_stmt = $db->prepare($customer_update_query);
+        $customer_stmt->bindParam(":points_change", $points_change);
+        $customer_stmt->bindParam(":id_customer", $data->id_customer);
+        $customer_stmt->execute();
     }
 
     $db->commit();
