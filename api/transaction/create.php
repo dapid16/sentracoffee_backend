@@ -14,7 +14,6 @@ include_once '../../config/database.php';
 
 $data = json_decode(file_get_contents("php://input"));
 
-// <<< PERUBAHAN DI SINI: validasi id_staff dihapus >>>
 if (
     empty($data->id_customer) ||
     !isset($data->total_amount) ||
@@ -73,8 +72,7 @@ try {
     }
     $points_change = $points_earned - $points_used;
     
-    // <<< PERUBAHAN DI SINI: Menangani id_staff yang mungkin NULL >>>
-    $id_staff = isset($data->id_staff) ? $data->id_staff : null;
+    $id_staff = isset($data->staffId) ? $data->staffId : null;
     $payment_method = !empty($data->payment_method) ? $data->payment_method : 'Cash';
 
     $query1 = "INSERT INTO transactions SET id_customer=:id_customer, id_staff=:id_staff, payment_method=:payment_method, total_amount=:total_amount, status='Completed', id_promotion=:id_promotion, discount_amount=:discount_amount, points_earned=:points_earned";
@@ -98,7 +96,30 @@ try {
         $stmt2->bindParam(":subtotal", $detail->subtotal);
         $stmt2->execute();
     }
+    
+    // --- Logika Pengurangan Stok Otomatis ---
+    foreach ($data->details as $detail) {
+        $id_menu = $detail->id_menu;
+        $quantity_sold = $detail->quantity;
 
+        $comp_query = "SELECT id_raw_material, quantity_needed FROM menu_compositions WHERE id_menu = ?";
+        $comp_stmt = $db->prepare($comp_query);
+        $comp_stmt->bindParam(1, $id_menu);
+        $comp_stmt->execute();
+
+        while ($comp_row = $comp_stmt->fetch(PDO::FETCH_ASSOC)) {
+            $id_bahan = $comp_row['id_raw_material'];
+            $butuh_per_porsi = $comp_row['quantity_needed'];
+            $total_bahan_terpakai = $butuh_per_porsi * $quantity_sold;
+
+            $stock_update_query = "UPDATE raw_materials SET current_stock = current_stock - ? WHERE id_raw_material = ?";
+            $stock_stmt = $db->prepare($stock_update_query);
+            $stock_stmt->bindParam(1, $total_bahan_terpakai);
+            $stock_stmt->bindParam(2, $id_bahan);
+            $stock_stmt->execute();
+        }
+    }
+    
     if ($points_change != 0) {
         $history_query = "INSERT INTO loyalty_points_history SET id_customer=:id_customer, id_transaction=:id_transaction, points_change=:points_change, type=:type, description=:description";
         $history_stmt = $db->prepare($history_query);
