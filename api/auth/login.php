@@ -25,7 +25,6 @@ if (!empty($data->email) && !empty($data->password)) {
     $email = htmlspecialchars(strip_tags($data->email));
     $password = $data->password;
 
-    // Langkah 1: Cek di tabel 'owners' (admin)
     $query_owner = "SELECT id_owner, nama_owner, email, password FROM owners WHERE email = ? LIMIT 1";
     $stmt_owner = $db->prepare($query_owner);
     $stmt_owner->bindParam(1, $email);
@@ -49,7 +48,7 @@ if (!empty($data->email) && !empty($data->password)) {
         }
     }
 
-    // Langkah 2: Cek di tabel 'staff'
+ 
     $query_staff = "SELECT id_staff, nama_staff, email, password, role FROM staffs WHERE email = ? LIMIT 1";
     $stmt_staff = $db->prepare($query_staff);
     $stmt_staff->bindParam(1, $email);
@@ -74,7 +73,7 @@ if (!empty($data->email) && !empty($data->password)) {
         }
     }
 
-    // Langkah 3: Cek di tabel 'customers'
+
     $query_customer = "SELECT id_customer, nama, email, password, no_hp, points FROM customers WHERE email = ? LIMIT 1";
     $stmt_customer = $db->prepare($query_customer);
     $stmt_customer->bindParam(1, $email);
@@ -100,7 +99,6 @@ if (!empty($data->email) && !empty($data->password)) {
         }
     }
 
-    // Langkah 4: Jika tidak ditemukan di mana pun atau password salah
     http_response_code(401);
     echo json_encode(["success" => false, "message" => "Login gagal. Email atau password salah."]);
 

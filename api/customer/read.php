@@ -1,5 +1,4 @@
 <?php
-// Header yang diperlukan
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: GET, OPTIONS");
@@ -11,16 +10,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit();
 }
 
-// Sertakan file koneksi dan model
 include_once __DIR__ . '/../../config/database.php';
 include_once __DIR__ . '/../../models/Customer.php';
 
-// Inisialisasi koneksi dan objek
 $database = new Database();
 $db = $database->getConnection();
 $customer = new Customer($db);
 
-// Panggil fungsi read() dari model Customer, yang sekarang sudah mengambil data points
 $stmt = $customer->read();
 $num = $stmt->rowCount();
 
@@ -31,13 +27,12 @@ if ($num > 0) {
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         extract($row);
         
-        // --- PERUBAHANNYA DI SINI ---
         $customer_item = array(
             "id_customer" => $id_customer,
             "nama" => $nama,
             "email" => $email,
             "no_hp" => $no_hp,
-            "points" => (int)$points // <<< TAMBAHKAN 'points' KE DALAM RESPON JSON
+            "points" => (int)$points 
         );
         array_push($customers_arr["records"], $customer_item);
     }

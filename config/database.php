@@ -1,6 +1,6 @@
 <?php
 class Database {
-    private $host = "localhost"; // <<< PERUBAHAN DI SINI
+    private $host = "localhost"; 
     private $db_name = "sentracoffee_db";
     private $username = "root";
     private $password = "";

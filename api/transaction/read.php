@@ -1,34 +1,33 @@
 <?php
-// Headers Wajib
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: GET, OPTIONS"); // Izinkan GET
+header("Access-Control-Allow-Methods: GET, OPTIONS"); 
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
-// Handle pre-flight request (OPTIONS method)
+
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     http_response_code(200);
     exit();
 }
 
-// Include file database
+
 include_once '../../config/database.php';
 
-// Inisialisasi koneksi database
+
 $database = new Database();
 $db = $database->getConnection();
 
-// Cek apakah id_customer dikirim via URL
+
 if (!isset($_GET['id_customer'])) {
-    http_response_code(400); // 400 Bad Request
+    http_response_code(400); 
     echo json_encode(array("message" => "Parameter id_customer tidak ditemukan."));
     exit();
 }
 
 $id_customer = htmlspecialchars(strip_tags($_GET['id_customer']));
 
-// --- Query Pertama: Ambil semua transaksi milik customer tersebut ---
+
 $query_transactions = "SELECT
                             id_transaction,
                             transaction_date,
@@ -66,8 +65,7 @@ if ($num > 0) {
             "details" => array()
         );
 
-        // --- Query Kedua: Untuk setiap transaksi, ambil detail itemnya ---
-        $query_details = "SELECT
+                $query_details = "SELECT
                             td.quantity,
                             td.subtotal,
                             m.nama_menu

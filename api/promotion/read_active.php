@@ -9,7 +9,7 @@ $database = new Database();
 $db = $database->getConnection();
 $promo = new Promotion($db);
 
-$stmt = $promo->readActive(); // Memanggil fungsi yang berbeda
+$stmt = $promo->readActive(); 
 $num = $stmt->rowCount();
 
 if($num > 0) {

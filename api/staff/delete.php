@@ -20,7 +20,7 @@ $data = json_decode(file_get_contents("php://input"));
 if (!empty($data->id_staff)) {
     $staff->id_staff = $data->id_staff;
 
-    // Panggil fungsi delete dari model
+   
     if ($staff->delete()) {
         http_response_code(200);
         echo json_encode(["status" => "success", "message" => "Staff was deleted."]);

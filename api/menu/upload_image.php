@@ -1,12 +1,12 @@
 <?php
-// Headers Wajib
+
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
-// Tampilkan semua error untuk debugging
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -17,28 +17,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
 $target_dir = "../../uploads/";
 
-// --- PENGECEKAN #1: Apakah folder uploads ada? ---
+
 if (!is_dir($target_dir)) {
     http_response_code(500);
     echo json_encode(array("success" => false, "message" => "Server error: Target directory 'uploads' does not exist."));
     exit();
 }
 
-// --- PENGECEKAN #2: Apakah folder uploads bisa ditulis? ---
+
 if (!is_writable($target_dir)) {
     http_response_code(500);
     echo json_encode(array("success" => false, "message" => "Server error: Target directory 'uploads' is not writable. Check permissions."));
     exit();
 }
 
-// --- PENGECEKAN #3: Apakah ada file yang dikirim? ---
 if (!isset($_FILES['image'])) {
     http_response_code(400);
     echo json_encode(array("success" => false, "message" => "No file key 'image' was sent in the request."));
     exit();
 }
 
-// --- PENGECEKAN #4: Apakah ada error saat proses upload dari PHP? ---
+
 $upload_error = $_FILES['image']['error'];
 if ($upload_error !== UPLOAD_ERR_OK) {
     $error_messages = [
@@ -57,7 +56,7 @@ if ($upload_error !== UPLOAD_ERR_OK) {
     exit();
 }
 
-// Jika semua pengecekan lolos, baru coba simpan file
+
 $image_name = uniqid() . '-' . basename($_FILES["image"]["name"]);
 $target_file = $target_dir . $image_name;
 

@@ -1,10 +1,10 @@
 <?php
-// Headers
+
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: GET, OPTIONS");
 
-// Handle pre-flight
+
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     http_response_code(200);
     exit();
@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
 include_once '../../config/database.php';
 
-// Cek apakah id_customer dikirim
+
 if (!isset($_GET['id_customer'])) {
     http_response_code(400);
     echo json_encode(["success" => false, "message" => "Parameter id_customer tidak ditemukan."]);

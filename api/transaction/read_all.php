@@ -8,8 +8,7 @@ $database = new Database();
 $db = $database->getConnection();
 
 try {
-    // Query utama untuk mengambil semua transaksi dan menggabungkannya dengan data customer, staff, dan promo
-    $query = "
+       $query = "
         SELECT
             t.id_transaction,
             t.transaction_date,
@@ -46,16 +45,15 @@ try {
                 "id_transaction" => $id_transaction,
                 "transaction_date" => $transaction_date,
                 "customer_name" => $customer_name,
-                "staff_name" => $staff_name, // Bisa NULL jika dibuat Owner
+                "staff_name" => $staff_name, 
                 "payment_method" => $payment_method,
                 "total_amount" => $total_amount,
-                "promo_name" => $promo_name, // Bisa NULL jika tidak pakai promo
+                "promo_name" => $promo_name, 
                 "discount_amount" => $discount_amount,
                 "details" => []
             ];
 
-            // Query kedua untuk mengambil detail item per transaksi
-            $detail_query = "
+                      $detail_query = "
                 SELECT
                     td.quantity,
                     m.nama_menu

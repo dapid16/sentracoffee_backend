@@ -1,12 +1,12 @@
 <?php
-// Headers Wajib untuk API
+
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: GET, OPTIONS");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
-// Handle pre-flight request (OPTIONS method)
+
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     http_response_code(200);
     exit();
@@ -18,8 +18,7 @@ $database = new Database();
 $db = $database->getConnection();
 
 try {
-    // Query untuk mengambil total penjualan per bulan dan per metode pembayaran
-    $query = "
+       $query = "
         SELECT
             YEAR(transaction_date) AS tahun,
             MONTH(transaction_date) AS bulan,
@@ -41,8 +40,7 @@ try {
     $reports = [];
     $monthly_totals = [];
 
-    // Proses hasil query menjadi struktur yang lebih mudah diolah
-    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+       while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         $month_key = $row['tahun'] . '-' . str_pad($row['bulan'], 2, '0', STR_PAD_LEFT);
         
         if (!isset($reports[$month_key])) {
@@ -57,7 +55,7 @@ try {
         $reports[$month_key]['total_revenue'] += (float)$row['total_bulanan'];
     }
 
-    // Hitung total revenue per bulan untuk perhitungan perbandingan
+   
     foreach ($reports as $key => $report) {
         $monthly_totals[$key] = $report['total_revenue'];
     }
@@ -65,7 +63,7 @@ try {
     $keys = array_keys($monthly_totals);
     $final_reports = [];
 
-    // Hitung perbandingan dengan bulan sebelumnya
+   
     for ($i = 0; $i < count($keys); $i++) {
         $current_key = $keys[$i];
         $current_report = $reports[$current_key];
@@ -81,14 +79,14 @@ try {
 
         $current_report['comparison'] = $comparison_text;
         
-        // Format breakdown
+        
         $formatted_breakdown = [];
         foreach($current_report['breakdown'] as $method => $amount){
             $formatted_breakdown[ucfirst($method)] = 'Rp' . number_format($amount, 0, ',', '.');
         }
         $current_report['breakdown'] = $formatted_breakdown;
 
-        // Format total revenue
+        
         $current_report['total_revenue'] = 'Rp' . number_format($current_report['total_revenue'], 0, ',', '.');
 
         $final_reports[] = $current_report;

@@ -24,14 +24,14 @@ if (
     !empty($data->role) &&
     !empty($data->id_owner)
 ) {
-    // Cek apakah email sudah terdaftar
+    
     $check_query = "SELECT id_staff FROM staffs WHERE email = ?";
     $check_stmt = $db->prepare($check_query);
     $check_stmt->bindParam(1, $data->email);
     $check_stmt->execute();
 
     if($check_stmt->rowCount() > 0){
-        http_response_code(409); // Conflict
+        http_response_code(409); 
         echo json_encode(array("message" => "Email already registered for a staff."));
         exit();
     }
@@ -41,7 +41,7 @@ if (
 
     $nama_staff = htmlspecialchars(strip_tags($data->nama_staff));
     $email = htmlspecialchars(strip_tags($data->email));
-    $password = htmlspecialchars(strip_tags($data->password)); // Sebaiknya di-hash
+    $password = htmlspecialchars(strip_tags($data->password)); 
     $role = htmlspecialchars(strip_tags($data->role));
     $no_hp = isset($data->no_hp) ? htmlspecialchars(strip_tags($data->no_hp)) : null;
     $id_owner = htmlspecialchars(strip_tags($data->id_owner));

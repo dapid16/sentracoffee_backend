@@ -33,13 +33,13 @@ try {
         throw new Exception("Unable to update menu.");
     }
     
-    // Hapus komposisi lama
+    
     $delete_query = "DELETE FROM menu_compositions WHERE id_menu = :id_menu";
     $delete_stmt = $db->prepare($delete_query);
     $delete_stmt->bindParam(':id_menu', $menu->id_menu);
     $delete_stmt->execute();
 
-    // Masukkan komposisi baru
+    
     if (isset($data->compositions) && is_array($data->compositions)) {
         $comp_query = "INSERT INTO menu_compositions (id_menu, id_raw_material, quantity_needed) VALUES (:id_menu, :id_raw_material, :quantity_needed)";
         $comp_stmt = $db->prepare($comp_query);

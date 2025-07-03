@@ -1,5 +1,5 @@
 <?php
-// Headers Wajib
+
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: GET, OPTIONS");
@@ -10,28 +10,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit();
 }
 
-// Sertakan file koneksi database dan model
+
 include_once '../../config/database.php';
 include_once '../../models/Menu.php';
 
-// Inisialisasi koneksi database
+
 $database = new Database();
 $db = $database->getConnection();
 
-// Inisialisasi objek Menu
 $menu = new Menu($db);
 
-// Panggil fungsi read() dari model Menu (yang sudah kita upgrade)
 $stmt = $menu->read();
 $num = $stmt->rowCount();
 
-// Cek apakah ada record yang ditemukan
 if ($num > 0) {
     $menus_arr = array();
     $menus_arr["records"] = array();
 
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        // extract $row ke variabel ($id_menu, $nama_menu, $gambar, dll)
+
         extract($row); 
 
         $menu_item = array(
@@ -39,7 +36,7 @@ if ($num > 0) {
             "nama_menu" => $nama_menu,
             "kategori" => $kategori,
             "harga" => $harga,
-            "is_available" => $is_available, // <<< KOMA SUDAH DIPERBAIKI DI SINI
+            "is_available" => $is_available, 
             "gambar" => $gambar
         );
 
